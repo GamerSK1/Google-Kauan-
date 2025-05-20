@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -25,7 +24,6 @@
     .logo span {
       font-size: 36px;
       font-weight: bold;
-      font-family: Arial, sans-serif;
     }
     .logo .g { color: #4285F4; }
     .logo .o1 { color: #DB4437; }
@@ -130,55 +128,70 @@
     </div>
     <button class="config-btn" onclick="toggleConfig()">⚙️ Configurações</button>
   </header>
+
   <div class="container">
     <div class="search-box">
       <input id="searchInput" placeholder="Digite sua pesquisa..." />
-      <button onclick="search()">Pesquisar</button>
+      <button id="searchBtn">Pesquisar</button>
     </div>
     <div class="results" id="results"></div>
   </div>
+
   <div id="config-panel">
     <h3>Configurações</h3>
     <label class="toggle-darkmode">
-      <input type="checkbox" onchange="toggleDarkMode()" /> Modo escuro
+      <input type="checkbox" id="darkModeToggle" /> Modo escuro
     </label>
   </div>
+
   <script>
-    const fakeResults = {
-      tecnologia: [
-        { title: "Como a IA está mudando o mundo", url: "https://exemplo.com/ia", snippet: "A inteligência artificial está revolucionando o mercado de trabalho." },
-        { title: "Top 10 gadgets de 2025", url: "https://exemplo.com/gadgets", snippet: "Os dispositivos mais inovadores deste ano." }
-      ],
-      futebol: [
-        { title: "Final do campeonato brasileiro", url: "https://exemplo.com/brasileirao", snippet: "Veja os melhores momentos da final." },
-        { title: "Transferências de jogadores 2025", url: "https://exemplo.com/transferencias", snippet: "Confira os nomes mais comentados." }
-      ]
-    };
+  document.addEventListener("DOMContentLoaded", () => {
     function search() {
-      const query = document.getElementById('searchInput').value.trim().toLowerCase();
+      const query = document.getElementById('searchInput').value.trim();
       const resultsDiv = document.getElementById('results');
       resultsDiv.innerHTML = "";
+
       if (!query) {
         resultsDiv.innerHTML = "<p>Digite algo para pesquisar!</p>";
         return;
       }
-      const results = fakeResults[query] || [
-        { title: `Resultados para "${query}"`, url: "#", snippet: "Nenhum resultado real encontrado. Refine sua pesquisa." }
-      ];
-      results.forEach(item => {
-        const div = document.createElement("div");
-        div.className = "result-item";
-        div.innerHTML = `<a href="${item.url}" target="_blank">${item.title}</a><p>${item.snippet}</p>`;
-        resultsDiv.appendChild(div);
-      });
+
+      fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_redirect=1`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.AbstractURL) {
+            const div = document.createElement("div");
+            div.className = "result-item";
+            div.innerHTML = `
+              <a href="${data.AbstractURL}" target="_blank">${data.Heading}</a>
+              <p>${data.AbstractText}</p>
+            `;
+            resultsDiv.appendChild(div);
+          } else {
+            resultsDiv.innerHTML = "<p>Nenhum resultado encontrado. Tente outra pesquisa.</p>";
+          }
+        })
+        .catch(error => {
+          resultsDiv.innerHTML = "<p>Erro ao buscar resultados.</p>";
+          console.error(error);
+        });
     }
+
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark-mode');
+    }
+
     function toggleConfig() {
       const panel = document.getElementById('config-panel');
       panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
     }
-    function toggleDarkMode() {
-      document.body.classList.toggle('dark-mode');
-    }
+
+    document.getElementById("searchBtn").addEventListener("click", search);
+    document.getElementById("darkModeToggle").addEventListener("change", toggleDarkMode);
+    window.toggleConfig = toggleConfig;
+  });
+</script>
+
   </script>
 </body>
 </html>
